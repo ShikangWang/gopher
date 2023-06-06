@@ -1,8 +1,11 @@
 ﻿#include "gopher.h"
+#ifdef WINDOWS_TEST
+#include <conio.h>
+#endif
 
 uint8_t goal_per_gopher[3] = {5,10,20};
-uint16_t gopher_ttl[3] = {2000,1000,500};
-uint8_t difficulty = 0;
+uint16_t gopher_ttl[3] = {200,100,50};
+uint8_t difficulty = 2;//最大为2
 
 int main()
 {
@@ -19,6 +22,20 @@ int main()
             game.status = game_run(&game);
             Sleep(1);
         }
+        system("cls");
+        for (int i = 0; i < MAX_X; i++)
+        {
+            for (int j = 0; j < MAX_Y; j++)
+            {
+                printf("%d\t", game.gophers[j + MAX_X * i].ttl);
+            }
+            printf("\n");
+        }
+        printf("health : %d\n", game.health);
+        printf("ttl : %d\n", game.ttl);
+        printf("goal : %d\n", game.goal);
+        //usart_send()
+
     }
 }
 
@@ -37,6 +54,13 @@ void game_init(game_typedef* new_game, uint16_t health, uint16_t ttl)
     new_game->health = health;
     new_game->ttl = ttl;
     new_game->status = 0;
+    for (int i = 0; i < MAX_X * MAX_Y; i++)
+    {
+        new_game->gophers[i].is_alive = 0;
+        new_game->gophers[i].ttl = 0;
+        new_game->gophers[i].x = i % MAX_X;
+        new_game->gophers[i].y = i / MAX_X;
+    }
 }
 
 /*
@@ -52,10 +76,10 @@ uint8_t hit_gopher(game_typedef* game, uint8_t x, uint8_t y)
     }
     else
     {
-        if (game->gophers[x + y * MAX_Y].is_alive == 1)
+        if (game->gophers[x + y * MAX_X].is_alive == 1)
         {
-            game->gophers[x + y * MAX_Y].is_alive = 0;
-            game->gophers[x + y * MAX_Y].ttl = GOPHER_DEATH_TIME;
+            game->gophers[x + y * MAX_X].is_alive = 0;
+            game->gophers[x + y * MAX_X].ttl = GOPHER_DEATH_TIME;
             return 1;
         }
         else
@@ -68,18 +92,24 @@ uint8_t hit_gopher(game_typedef* game, uint8_t x, uint8_t y)
 @param game : 游戏结构体
 @return 0 : 游戏结束; 1 : 游戏正常运行
 */
-uint16_t count = 0;
+uint16_t count = 100;
 uint8_t game_run(game_typedef *game)
 {
     uint8_t x = 3, y = 3;
     count++;
     
-    if (count == 1000)//地鼠随机生成
+    if (count >= 100)//地鼠随机生成
     {
         count = 0;
-        x = rand() % 3;
-        y = rand() % 3;
-        gopher_init(&game->gophers[x + MAX_X * y], x, y, gopher_ttl[difficulty]);
+        for (int i = 0; i < difficulty + 1; i++)
+        {
+            do
+            {
+                x = rand() % 3;
+                y = rand() % 3;
+            } while (gopher_exist(game, x, y));
+            gopher_init(&game->gophers[x + MAX_X * y], x, y, gopher_ttl[difficulty]);
+        }
     }
     game->ttl -= 1;
     for (int i = 0; i < MAX_X * MAX_Y; i++)
@@ -88,15 +118,19 @@ uint8_t game_run(game_typedef *game)
         if (game->gophers[i].ttl == 0 && game->gophers[i].is_alive == 1) //地鼠一直未被击中
         {
             game->health = game->health > HEALTH_PER_GOPHER ? game->health - HEALTH_PER_GOPHER : 0;
+            game->gophers[i].is_alive = 0;
             if (game->health == 0)//生命值清空，游戏结束
                 return 0;
         }
     }
 
-    if (1)//判断玩家按下了按键
+    if (_kbhit())//判断玩家按下了按键
     {
         //x = rx_recv[0];//求出按键值
         //y = rx_recv[1];
+        uint8_t key = _getch() - 0x30 - 1;
+        x = key % MAX_X;
+        y = 2 - key / MAX_Y;
         if (hit_gopher(game, x, y))
         {
             game->goal += goal_per_gopher[difficulty];
@@ -110,4 +144,37 @@ uint8_t game_run(game_typedef *game)
     }
 
     return 1;
+}
+
+/*
+@brief 获取当前所有洞中的地鼠数量
+@param game : 游戏结构体
+@return 每一位表示每一个洞中的地鼠状态,1为有地鼠,0为无地鼠
+*/
+uint16_t get_gopher_state(game_typedef* game)
+{
+    uint16_t state = 0;
+    if (MAX_X * MAX_Y > 16)
+        return -1;
+    for (int i = 0; i < MAX_X * MAX_Y; i++)
+    {
+        state = state << 1;
+        state |= game->gophers[i].ttl > 0 ? 1 : 0;
+    }
+    return state;
+}
+
+/*
+@brief 判断某一个洞是否有地鼠存在
+@param game : 游戏结构体; x,y : 需要判断的位置
+@return 1 : 存在; 0 : 不存在
+*/
+uint8_t gopher_exist(game_typedef* game, uint8_t x, uint8_t y)
+{
+    if (x < 0 || y < 0 || x > MAX_X - 1 || y > MAX_Y - 1)
+        return -1;
+    else
+    {
+        return game->gophers[x + MAX_X * y].ttl > 0 ? 1 : 0;
+    }
 }

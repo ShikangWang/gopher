@@ -12,6 +12,8 @@
 #define GOPHER_DEATH_TIME	10
 #define HEALTH_PER_GOPHER	5
 
+#define WINDOWS_TEST
+
 
 typedef struct
 {
@@ -34,6 +36,8 @@ void gopher_init(gopher_typedef *new_gopher, uint8_t x, uint8_t y, uint16_t ttl)
 void game_init(game_typedef *new_game, uint16_t health, uint16_t ttl);
 uint8_t hit_gopher(game_typedef *game, uint8_t x, uint8_t y);
 uint8_t game_run(game_typedef *game);
+uint16_t get_gopher_state(game_typedef *game);
+uint8_t gopher_exist(game_typedef *game, uint8_t x, uint8_t y);
 
 #endif
 

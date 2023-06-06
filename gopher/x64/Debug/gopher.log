@@ -1,4 +1,4 @@
 ﻿  gopher.c
-D:\Desktop\课程资料\硬件课设\gopher\gopher\gopher.c(11,15): warning C4047: “函数”:“unsigned int”与“time_t (__cdecl *)(time_t *const )”的间接级别不同
-D:\Desktop\课程资料\硬件课设\gopher\gopher\gopher.c(11,11): warning C4024: “srand”: 形参和实参 1 的类型不同
+D:\Desktop\课程资料\硬件课设\gopher\gopher\gopher.c(14,15): warning C4047: “函数”:“unsigned int”与“time_t (__cdecl *)(time_t *const )”的间接级别不同
+D:\Desktop\课程资料\硬件课设\gopher\gopher\gopher.c(14,11): warning C4024: “srand”: 形参和实参 1 的类型不同
   gopher.vcxproj -> D:\Desktop\课程资料\硬件课设\gopher\gopher\x64\Debug\gopher.exe
